@@ -41,9 +41,9 @@
 		<constructor-arg name="poolConfig" ref="jedisPoolConfig"></constructor-arg>
 	</bean>
 	
-	<bean id="jedisClient" class="com.taotao.rest.sso.JediusClientSingle"></bean>
+	<bean id="jedisClient" class="com.taotao.sso.dao.JediusClientSingle"></bean>
 
-	<!-- <bean id="jedisCluster" class="redis.clients.jedis.JedisCluster"> <constructor-arg 
+	<!-- <bean id="jedisCluster" class="com.taotao.sso.JedisCluster"> <constructor-arg 
 		name="nodes"> <set> <bean class="redis.clients.jedis.HostAndPort"> <constructor-arg 
 		name="host" value="127.0.0.1"></constructor-arg> <constructor-arg name="port" 
 		value="7001"></constructor-arg> </bean> <bean class="redis.clients.jedis.HostAndPort"> 
