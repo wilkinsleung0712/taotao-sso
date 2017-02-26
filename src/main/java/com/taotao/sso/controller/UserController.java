@@ -22,12 +22,41 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    /**
+     * 用户登录
+     * 
+     * @param username
+     *            - 用户名
+     * @param password
+     *            - 密码
+     * @return
+     */
     @RequestMapping("/login")
-    public String userLogin(@RequestParam String username,
-            @RequestParam String password) {
-        return null;
+    public TaotaoResult userLogin(@RequestParam String username, @RequestParam String password) {
+        TaotaoResult result = null;
+        if (StringUtils.isBlank(username)) {
+            result = TaotaoResult.build(400, "用户名不能为空");
+        }
+        if (StringUtils.isBlank(password)) {
+            result = TaotaoResult.build(400, "密码不能为空");
+        }
+        try {
+            // 通过检验
+            result = userService.userLogin(username, password);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            result = TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+        }
+        return result;
     }
 
+    /**
+     * 用户注册
+     * 
+     * @param user
+     * @return
+     */
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public TaotaoResult register(TbUser user) {
         TaotaoResult result = null;
@@ -43,10 +72,17 @@ public class UserController {
         return result;
     }
 
+    /**
+     * 检验用户信息是否可用（存在）
+     * 
+     * @param param
+     * @param type
+     * @param callback
+     * @return
+     */
     @RequestMapping("/check/{param}/{type}")
     @ResponseBody
-    public Object checkData(@PathVariable String param,
-            @PathVariable Integer type, String callback) {
+    public Object checkData(@PathVariable String param, @PathVariable Integer type, String callback) {
         TaotaoResult result = null;
         if (StringUtils.isBlank(param)) {
             result = TaotaoResult.build(400, "校验内容不能为空");
@@ -64,8 +100,7 @@ public class UserController {
             if (!StringUtils.isBlank(callback)) {
                 // 需要让数据返回调用一个json javascript callback function 来控制cors
                 // 所以需要返回Object而不是taotaoresult
-                MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(
-                        result);
+                MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
                 mappingJacksonValue.setJsonpFunction(callback);
                 return mappingJacksonValue;
             } else {
@@ -84,10 +119,54 @@ public class UserController {
         }
         // 需要判断是否有callback function在前端调用
         if (!StringUtils.isBlank(callback)) {
-            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(
-                    result);
+            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
             mappingJacksonValue.setJsonpFunction(callback);
             return mappingJacksonValue;
+        }
+
+        return result;
+    }
+
+    /**
+     * 通过token查询用户信息
+     * 
+     * @param token
+     *            - 用户登录凭证
+     * @param callback
+     *            -jsonp回调方法
+     * @return
+     */
+    @RequestMapping("/token/{token}")
+    public Object getUserByToken(@PathVariable String token, String callback) {
+        TaotaoResult result = null;
+        if (StringUtils.isBlank(token)) {
+            // 没有提交token
+            result = TaotaoResult.build(400, "密匙无效");
+            if (StringUtils.isBlank(callback)) {
+                // 不需要callback
+                return result;
+            }
+            // 需要callback
+            MappingJacksonValue mappingJsonValue = new MappingJacksonValue(result);
+            mappingJsonValue.setJsonpFunction(callback);
+            return mappingJsonValue;
+        }
+
+        try {
+            // 需要在缓存里查找用户资料
+            result = userService.getUserByToken(token);
+            if (!StringUtils.isBlank(callback)) {
+                // 需要callback
+                MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
+                mappingJacksonValue.setJsonpFunction(callback);
+                return mappingJacksonValue;
+            }
+            // 不需要callback
+
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            result = TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
         }
 
         return result;

@@ -18,4 +18,19 @@ public interface UserService {
      * @return 返回数据，true：数据可用，false：数据不可用
      */
     public TaotaoResult checkData(String param, Integer type);
+    
+    /**
+     * 用密匙查询缓存用户资料
+     * @param token
+     * @return
+     */
+    public TaotaoResult getUserByToken(String token);
+
+    /**
+     * 用户登陆
+     * @param username
+     * @param password
+     * @return - 返回token封装在
+     */
+    public TaotaoResult userLogin(String username, String password);
 }
