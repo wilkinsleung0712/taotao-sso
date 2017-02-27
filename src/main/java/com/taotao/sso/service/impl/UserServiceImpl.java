@@ -2,6 +2,7 @@ package com.taotao.sso.service.impl;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -88,12 +89,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public TaotaoResult userLogin(String username, String password) {
-        TaotaoResult result = new TaotaoResult();
         TbUserExample example = new TbUserExample();
         Criteria criteria = example.createCriteria();
         criteria.andUsernameEqualTo(username);
-        tbUserMapper.selectByExample(example);
-        return null;
+        List<TbUser> list = tbUserMapper.selectByExample(example);
+
+        if (null == list || list.isEmpty()) {
+            return TaotaoResult.build(400, "用户不存在或用户名错误");
+        }
+
+        TbUser user = list.get(0);
+        // 检验用户密码
+        if (!StringUtils.equals(user.getPassword(), DigestUtils.md5Hex(password.getBytes()))) {
+            return TaotaoResult.build(400, "用户密码错误");
+        }
+        // 检验用户名与密码正确，需要放用户token到缓存系统
+        // 为了安全性需要把用户的密码删除
+        user.setPassword(null);
+        String token = UUID.randomUUID().toString();
+        jedisClient.set(REDIS_USER_SESSION_KEY + ":" + token, JsonUtils.objectToJson(user));
+        // 设置过期时间
+        jedisClient.expire(REDIS_USER_SESSION_KEY + ":" + token, SSO_SESSION_EXPIRE);
+        // 添加写cookie的逻辑，cookie的有效期是关闭浏览器失效
+        // CookieUtils.setCookie(request, response, "TT_TOKEN", token);
+        return TaotaoResult.ok(token);
     }
 
 }

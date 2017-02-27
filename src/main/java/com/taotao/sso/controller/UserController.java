@@ -31,7 +31,8 @@ public class UserController {
      *            - 密码
      * @return
      */
-    @RequestMapping("/login")
+    @RequestMapping(value="/login", method=RequestMethod.POST)
+    @ResponseBody
     public TaotaoResult userLogin(@RequestParam String username, @RequestParam String password) {
         TaotaoResult result = null;
         if (StringUtils.isBlank(username)) {
