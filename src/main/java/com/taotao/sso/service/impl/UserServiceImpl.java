@@ -4,6 +4,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import com.taotao.pojo.TbUserExample;
 import com.taotao.pojo.TbUserExample.Criteria;
 import com.taotao.sso.dao.JedisClient;
 import com.taotao.sso.service.UserService;
+import com.taotao.util.CookieUtils;
 import com.taotao.util.JsonUtils;
 
 @Service
@@ -73,7 +77,7 @@ public class UserServiceImpl implements UserService {
     public TaotaoResult getUserByToken(String token) {
         TaotaoResult result = null;
         // 需要在缓存里查找用户资料
-        String userInfo = jedisClient.get(token);
+        String userInfo = jedisClient.get(REDIS_USER_SESSION_KEY + ":" + token);
         if (StringUtils.isBlank(userInfo)) {
             // 用户没有登入或者登入缓存信息已过期
             result = TaotaoResult.build(400, "会话过期，请重新登录");
@@ -88,7 +92,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public TaotaoResult userLogin(String username, String password) {
+    public TaotaoResult userLogin(String username, String password, HttpServletRequest request,
+            HttpServletResponse response) {
         TbUserExample example = new TbUserExample();
         Criteria criteria = example.createCriteria();
         criteria.andUsernameEqualTo(username);
@@ -111,8 +116,17 @@ public class UserServiceImpl implements UserService {
         // 设置过期时间
         jedisClient.expire(REDIS_USER_SESSION_KEY + ":" + token, SSO_SESSION_EXPIRE);
         // 添加写cookie的逻辑，cookie的有效期是关闭浏览器失效
-        // CookieUtils.setCookie(request, response, "TT_TOKEN", token);
+        // 用"TT_TOKEN"来定义cookie， 前端需要提取这个字符段
+        CookieUtils.setCookie(request, response, "TT_TOKEN", token);
         return TaotaoResult.ok(token);
+    }
+
+    @Override
+    public TaotaoResult userLogoutByToken(String token) {
+        // 根据token从redis删除用户信息
+        // 只需要删除server端， client端会自动过期
+        long del = jedisClient.del(REDIS_USER_SESSION_KEY + ":"  + token);
+        return TaotaoResult.ok(del);
     }
 
 }

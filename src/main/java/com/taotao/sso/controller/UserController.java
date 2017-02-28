@@ -1,5 +1,8 @@
 package com.taotao.sso.controller;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.converter.json.MappingJacksonValue;
@@ -29,11 +32,14 @@ public class UserController {
      *            - 用户名
      * @param password
      *            - 密码
+     * @param request
+     * @param response
      * @return
      */
-    @RequestMapping(value="/login", method=RequestMethod.POST)
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
     @ResponseBody
-    public TaotaoResult userLogin(@RequestParam String username, @RequestParam String password) {
+    public TaotaoResult userLogin(@RequestParam String username, @RequestParam String password,
+            HttpServletRequest request, HttpServletResponse response) {
         TaotaoResult result = null;
         if (StringUtils.isBlank(username)) {
             result = TaotaoResult.build(400, "用户名不能为空");
@@ -43,7 +49,7 @@ public class UserController {
         }
         try {
             // 通过检验
-            result = userService.userLogin(username, password);
+            result = userService.userLogin(username, password, request, response);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -59,6 +65,7 @@ public class UserController {
      * @return
      */
     @RequestMapping(value = "/register", method = RequestMethod.POST)
+    @ResponseBody
     public TaotaoResult register(TbUser user) {
         TaotaoResult result = null;
         try {
@@ -138,6 +145,7 @@ public class UserController {
      * @return
      */
     @RequestMapping("/token/{token}")
+    @ResponseBody
     public Object getUserByToken(@PathVariable String token, String callback) {
         TaotaoResult result = null;
         if (StringUtils.isBlank(token)) {
@@ -173,4 +181,35 @@ public class UserController {
         return result;
     }
 
+    @RequestMapping("/logout/{token}")
+    @ResponseBody
+    public Object userLogout(@PathVariable String token, String callback) {
+        TaotaoResult result = null;
+        if (StringUtils.isBlank(token)) {
+            result = TaotaoResult.build(400, "密匙无效");
+            if (StringUtils.isBlank(callback)) {
+                // 不需要callback
+                return result;
+            }
+            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
+            mappingJacksonValue.setJsonpFunction(callback);
+            return mappingJacksonValue;
+        }
+        // 密匙有效
+        try {
+            result = userService.userLogoutByToken(token);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            result = TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+        }
+        
+        if (!StringUtils.isBlank(callback)) {
+            // 需要callback
+            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
+            mappingJacksonValue.setJsonpFunction(callback);
+            return mappingJacksonValue;
+        }
+        return result;
+    }
 }

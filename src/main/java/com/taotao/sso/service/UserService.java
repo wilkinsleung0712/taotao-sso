@@ -1,5 +1,8 @@
 package com.taotao.sso.service;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import com.taotao.pojo.TaotaoResult;
 import com.taotao.pojo.TbUser;
 
@@ -37,10 +40,19 @@ public interface UserService {
      * 
      * @param username
      * @param password
+     * @param request
+     *            - 用于填写cookies
+     * @param response
+     *            - 用于填写cookies
      * @return - 返回token封装在
      */
-    public TaotaoResult userLogin(String username, String password); // ,HttpServletRequest
-                                                                     // request,
-                                                                     // HttpServletResponse
-                                                                     // response
+    public TaotaoResult userLogin(String username, String password, HttpServletRequest request,
+            HttpServletResponse response);
+
+    /**
+     * @param token
+     * @return
+     */
+    public TaotaoResult userLogoutByToken(String token);
+
 }
