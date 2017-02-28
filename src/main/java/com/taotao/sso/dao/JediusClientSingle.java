@@ -76,4 +76,13 @@ public class JediusClientSingle implements JedisClient {
         return delete;
     }
 
+    @Override
+    public long del(String key) {
+        Jedis client = jedisPool.getResource();
+        Long delete = client.del(key);
+        client.close();
+        return delete;
+    }
+    
+
 }

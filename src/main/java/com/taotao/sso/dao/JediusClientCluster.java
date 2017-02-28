@@ -2,6 +2,7 @@ package com.taotao.sso.dao;
 
 import org.springframework.stereotype.Service;
 
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
 
 @Service
@@ -49,6 +50,11 @@ public class JediusClientCluster implements JedisClient {
     @Override
     public long hdel(String hkey, String key) {
         return jedisCluster.hdel(hkey, key);
+    }
+    
+    @Override
+    public long del(String key) {
+        return jedisCluster.del(key);
     }
 
 }
