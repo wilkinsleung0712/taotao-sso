@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -25,6 +26,19 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    
+    @RequestMapping("/showLogin")
+    public String getLoginPage(String redirect, Model model) {
+        model.addAttribute("redirect", redirect);
+        return "login";
+    }
+
+    @RequestMapping("/showRegister")
+    public String showRegister() {
+        return "register";
+    }
+    
+    
     /**
      * 用户登录
      * 
@@ -38,7 +52,7 @@ public class UserController {
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     @ResponseBody
-    public TaotaoResult userLogin(@RequestParam String username, @RequestParam String password,
+    public TaotaoResult userLogin(String username, String password,
             HttpServletRequest request, HttpServletResponse response) {
         TaotaoResult result = null;
         if (StringUtils.isBlank(username)) {
