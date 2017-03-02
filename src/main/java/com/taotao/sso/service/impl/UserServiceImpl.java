@@ -21,6 +21,7 @@ import com.taotao.pojo.TbUserExample.Criteria;
 import com.taotao.sso.dao.JedisClient;
 import com.taotao.sso.service.UserService;
 import com.taotao.util.CookieUtils;
+import com.taotao.util.ExceptionUtil;
 import com.taotao.util.JsonUtils;
 
 @Service
@@ -77,18 +78,25 @@ public class UserServiceImpl implements UserService {
     public TaotaoResult getUserByToken(String token) {
         TaotaoResult result = null;
         // 需要在缓存里查找用户资料
-        String userInfo = jedisClient.get(REDIS_USER_SESSION_KEY + ":" + token);
-        if (StringUtils.isBlank(userInfo)) {
-            // 用户没有登入或者登入缓存信息已过期
-            result = TaotaoResult.build(400, "会话过期，请重新登录");
-            return result;
+        try {
+            String userInfo = jedisClient.get(REDIS_USER_SESSION_KEY + ":" + token);
+            if (StringUtils.isBlank(userInfo)) {
+                // 用户没有登入或者登入缓存信息已过期
+                result = TaotaoResult.build(400, "会话过期，请重新登录");
+                return result;
 
+            }
+            // 更新过期时间
+            jedisClient.expire(REDIS_USER_SESSION_KEY + ":" + token, SSO_SESSION_EXPIRE);
+            // 返回用户信息
+            TbUser user = JsonUtils.jsonToPojo(userInfo, TbUser.class);
+            result = TaotaoResult.ok(user);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            result = TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
         }
-        // 更新过期时间
-        jedisClient.expire(REDIS_USER_SESSION_KEY + ":" + token, SSO_SESSION_EXPIRE);
-        // 返回用户信息
-        TbUser user = JsonUtils.jsonToPojo(userInfo, TbUser.class);
-        return TaotaoResult.ok(user);
+        return result;
     }
 
     @Override
@@ -125,7 +133,7 @@ public class UserServiceImpl implements UserService {
     public TaotaoResult userLogoutByToken(String token) {
         // 根据token从redis删除用户信息
         // 只需要删除server端， client端会自动过期
-        long del = jedisClient.del(REDIS_USER_SESSION_KEY + ":"  + token);
+        long del = jedisClient.del(REDIS_USER_SESSION_KEY + ":" + token);
         return TaotaoResult.ok(del);
     }
 
