@@ -54,7 +54,7 @@
             <artifactId>jedis</artifactId>
         </dependency>
   </dependencies>
-  <!-- 运行web工程需要添加一个tomcat插件。插件必须添加到taotao-manager工程中。因为taotao-manager是聚合工程。在运行时需要把子工程聚合到一起才能运行。 -->
+  <!-- 运行web工程需要添加一个tomcat插件。 -->
     <build>
         <!-- 配置插件 -->
         <plugins>
